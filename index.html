@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Uči Hrvatski! - Croata Práctico</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <button id="home-btn" class="btn-icon header-home" title="Menú principal">
+                <i data-lucide="home"></i>
+            </button>
+            <div class="stat-item">
+                <i data-lucide="flame" class="icon-streak"></i>
+                <span id="streak-count">0</span>
+            </div>
+            <div class="stat-item">
+                <i data-lucide="zap" class="icon-xp"></i>
+                <span id="xp-count">0 XP</span>
+            </div>
+            <div class="stat-item">
+                <i data-lucide="heart" class="icon-lives"></i>
+                <span id="lives-count">3</span>
+            </div>
+        </header>
+
+        <div id="review-banner" class="banner hidden">
+            <div class="banner-content">
+                <i data-lucide="clock"></i>
+                <p>¡Han pasado 12h! Toca un repaso rápido para no perder el ritmo.</p>
+            </div>
+            <button id="start-review-btn" class="btn btn-secondary">Comenzar Repaso Express</button>
+        </div>
+
+        <main id="home-screen" class="screen">
+            <h2>Camino de Aprendizaje</h2>
+            <p class="sub-title">Completa los módulos en orden para desbloquear nuevos niveles (A1 ➔ B2)</p>
+            <div id="modules-list" class="modules-grid"></div>
+        </main>
+
+        <main id="mode-screen" class="screen hidden">
+            <button id="back-to-home-btn" class="btn-back">
+                <i data-lucide="arrow-left"></i> Volver al Camino
+            </button>
+            <div class="mode-header">
+                <h2 id="selected-module-title">Módulo</h2>
+                <p id="selected-module-count">X expresiones</p>
+            </div>
+            <div class="mode-cards">
+                <div id="learn-mode-btn" class="mode-card">
+                    <i data-lucide="book-open" class="mode-icon learn"></i>
+                    <h3>1. Aprender Vocabulario</h3>
+                    <p>Revisa frases, pronunciación y contexto sin prisa ni vidas.</p>
+                </div>
+                <div id="quiz-mode-btn" class="mode-card">
+                    <i data-lucide="trophy" class="mode-icon quiz"></i>
+                    <h3>2. Practicar / Quiz</h3>
+                    <p>Pon a prueba tu memoria para ganar XP y desbloquear el siguiente nivel.</p>
+                </div>
+            </div>
+        </main>
+
+        <main id="learn-screen" class="screen hidden">
+            <div class="top-nav">
+                <button class="btn-back exit-session-btn"><i data-lucide="x"></i> Salir</button>
+                <span id="learn-counter" class="session-counter">1 / 15</span>
+            </div>
+
+            <div class="flashcard">
+                <span class="card-context" id="learn-context">Uso frecuente</span>
+                <div class="audio-phrase">
+                    <h1 id="learn-croatian">Dobar dan</h1>
+                    <button id="learn-audio-btn" class="btn-icon"><i data-lucide="volume-2"></i></button>
+                </div>
+                <h2 id="learn-spanish" class="spanish-translation">Buenos días</h2>
+                <div class="card-example">
+                    <strong>💡 Contexto diario:</strong>
+                    <p id="learn-example">Se usa en tiendas y restaurantes al entrar.</p>
+                </div>
+            </div>
+
+            <div class="nav-controls">
+                <button id="prev-learn-btn" class="btn btn-outline">Anterior</button>
+                <button id="next-learn-btn" class="btn btn-primary">Siguiente</button>
+            </div>
+        </main>
+
+        <main id="quiz-screen" class="screen hidden">
+            <div class="top-nav">
+                <button class="btn-back exit-session-btn"><i data-lucide="x"></i> Salir</button>
+                <div class="progress-bar-container">
+                    <div id="progress-bar" class="progress-bar"></div>
+                </div>
+            </div>
+            
+            <div class="question-container">
+                <span id="quiz-tag" class="quiz-tag">PRACTICA</span>
+                <h3 id="question-prompt">¿Cómo se traduce esta frase?</h3>
+                <div class="audio-phrase">
+                    <h1 id="target-phrase">Dobar dan</h1>
+                    <button id="audio-btn" class="btn-icon"><i data-lucide="volume-2"></i></button>
+                </div>
+            </div>
+
+            <div id="options-container" class="options-grid"></div>
+
+            <button id="check-btn" class="btn btn-primary hidden">Comprobar</button>
+
+            <div id="feedback-modal" class="feedback-card hidden">
+                <h2 id="feedback-title">¡Excelente!</h2>
+                <p id="feedback-msg"></p>
+                <button id="next-quiz-btn" class="btn btn-primary">Continuar</button>
+            </div>
+        </main>
+
+        <footer class="app-footer">
+            IA Developed with Pelz - MIT License
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+    <script>lucide.createIcons();</script>
+</body>
+</html>
