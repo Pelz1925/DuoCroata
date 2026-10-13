@@ -421,9 +421,19 @@ function nextQuizQuestion() {
     }
 }
 
+// --- REPASO EXPRESS (Sólo lecciones ya aprobadas/completadas) ---
 function startReviewSession() {
     reviewBanner.classList.add('hidden');
-    const allItems = courseData.flatMap(m => m.items);
+    
+    // Filtrar estrictamente los módulos que el usuario ya ha completado
+    let eligibleModules = courseData.filter(m => userStats.completedModules.includes(m.id));
+    
+    // Si por alguna razón no ha completado ninguno aún, usamos por defecto el primer módulo (A1)
+    if (eligibleModules.length === 0) {
+        eligibleModules = [courseData[0]];
+    }
+
+    const allItems = eligibleModules.flatMap(m => m.items);
     currentSessionItems = allItems.sort(() => 0.5 - Math.random()).slice(0, 10);
     currentIndex = 0;
     
@@ -455,15 +465,11 @@ function updateInteractionTime() {
 // --- SÍNTESIS DE VOZ NATIVA (Motor de Google Translate) ---
 function speakCroatian(text) {
     try {
-        // Cancelar cualquier audio anterior para que no se solapen
         window.speechSynthesis?.cancel();
-        
-        // URL del servicio público de TTS de Google configurado en croata (tl=hr)
         const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=hr&client=tw-ob`;
-        
         const audio = new Audio(ttsUrl);
         audio.play().catch(error => {
-            console.log("Audio play blocked or failed, falling back to Web Speech API", error);
+            console.log("Audio play failed, falling back", error);
             fallbackWebSpeech(text);
         });
     } catch (e) {
@@ -471,7 +477,6 @@ function speakCroatian(text) {
     }
 }
 
-// Fallback por si acaso el navegador bloquea el reproductor de red
 function fallbackWebSpeech(text) {
     if ('speechSynthesis' in window) {
         const utterance = new SpeechSynthesisUtterance(text);
