@@ -17,7 +17,7 @@ const courseData = [
             { id: 10, croatian: "Laku noć", spanish: "Buenas noches", example: "Se dice antes de ir a dormir.", options: ["Buenas noches", "Buenos días", "Hasta luego", "Buen viaje"] },
             { id: 11, croatian: "Tko si ti?", spanish: "¿Quién eres tú?", example: "Para preguntar la identidad de alguien.", options: ["¿Quién eres tú?", "¿Cómo te llamas?", "¿De dónde vienes?", "¿Qué haces?"] },
             { id: 12, croatian: "Odakle si?", spanish: "¿De dónde eres?", example: "Pregunta clásica al conocer a extranjeros.", options: ["¿De dónde eres?", "¿Dónde vives?", "¿A dónde vas?", "¿Qué edad tienes?"] },
-            { id: 13, croatian: "Ja sam iz Španjolske", spanish: "Soy de España", example: "Para indicar tu país de origen.", options: ["Soy de España", "Voy a España", "Vivo en España", "Conozco España"] },
+            { id: 13, croatian: "Ja sam iz Kolumbije", spanish: "Soy de Colombia", example: "Para indicar tu país de origen.", options: ["Soy de Colombia", "Voy a Colombia", "Vivo en Colombia", "Conozco Colombia"] },
             { id: 14, croatian: "Govoriš li španjolski?", spanish: "¿Hablas español?", example: "Para preguntar si dominan tu idioma.", options: ["¿Hablas español?", "¿Hablas inglés?", "¿Hablas croata?", "¿Entiendes todo?"] },
             { id: 15, croatian: "Razumijem", spanish: "Entiendo / Comprendo", example: "Para confirmar que has captado la idea.", options: ["Entiendo / Comprendo", "No entiendo", "No lo sé", "Olvídelo"] }
         ]
@@ -146,7 +146,7 @@ const courseData = [
             { id: 97, croatian: "Ma daj!", spanish: "¡Venga ya! / ¡No me digas!", example: "Para mostrar incredulidad o sorpresa.", options: ["¡Venga ya! / ¡No me digas!", "De acuerdo", "Claro que sí", "Cierto"] },
             { id: 98, croatian: "Kužiš?", spanish: "¿Pillaste / Entiendes?", example: "Coloquial equivalente a ¿captas?", options: ["¿Pillaste / Entiendes?", "¿Qué dices?", "¿Dónde?", "¿Cuándo?"] },
             { id: 99, croatian: "Kužim", spanish: "Lo pillo / Entiendo", example: "Respuesta afirmativa a 'kužiš'.", options: ["Lo pillo / Entiendo", "No entiendo", "Mentira", "Duda"] },
-            { id: 100, croatian: "Ide mi na živce", spanish: "Me saca de quicio / Me pone nervioso", example: "Cuando algo o alguien te irrita.", options: ["Me saca de quicio / Me pone nervioso", "Me encanta", "Me da igual", "Me divierte"] },
+            { id: 100, croatian: "Ide mi na živce", spanish: "Me saca de quicio / Me pone nervioso", example: "Когда algo o alguien te irrita.", options: ["Me saca de quicio / Me pone nervioso", "Me encanta", "Me da igual", "Me divierte"] },
             { id: 101, croatian: "Boli me briga", spanish: "Me importa un bledo / Me da igual", example: "Expresión de total indiferencia.", options: ["Me importa un bledo / Me da igual", "Me importa mucho", "Estoy preocupado", "Interesante"] },
             { id: 102, croatian: "Totalno", spanish: "Totalmente / ¡De acuerdo al 100%!", example: "Para dar la razón con énfasis.", options: ["Totalmente / ¡De acuerdo al 100%!", "Para nada", "Imposible", "Dudoso"] },
             { id: 103, croatian: "Svaka čast!", spanish: "¡Mis respetos! / ¡Muy bien hecho!", example: "Para felicitar a alguien efusivamente.", options: ["¡Mis respetos! / ¡Muy bien hecho!", "Qué mal", "Qué desastre", "Aburrido"] },
@@ -170,6 +170,15 @@ let activeModule = null;
 let currentSessionItems = [];
 let currentIndex = 0;
 let selectedOption = null;
+
+// Control de estadísticas y estado de fin de sesión
+let sessionStats = {
+    correct: 0,
+    incorrect: 0,
+    xpGained: 0,
+    isReview: false
+};
+let isSessionFinished = false;
 
 // --- ELEMENTOS DOM ---
 const streakEl = document.getElementById('streak-count');
@@ -211,7 +220,13 @@ function init() {
     document.getElementById('back-to-home-btn')?.addEventListener('click', showHomeScreen);
     
     document.querySelectorAll('.exit-session-btn').forEach(btn => {
-        btn.addEventListener('click', () => showModeScreen(activeModule.id));
+        btn.addEventListener('click', () => {
+            if (activeModule && activeModule.id !== 'review') {
+                showModeScreen(activeModule.id);
+            } else {
+                showHomeScreen();
+            }
+        });
     });
 
     document.getElementById('start-review-btn')?.addEventListener('click', startReviewSession);
@@ -347,6 +362,9 @@ function startQuizMode() {
     quizScreen.classList.remove('hidden');
     currentSessionItems = [...activeModule.items].sort(() => 0.5 - Math.random());
     currentIndex = 0;
+    sessionStats = { correct: 0, incorrect: 0, xpGained: 0, isReview: false };
+    isSessionFinished = false;
+    nextQuizBtn.innerText = "Siguiente";
     loadQuizQuestion();
 }
 
@@ -386,11 +404,14 @@ function checkAnswer() {
 
     if (isCorrect) {
         userStats.xp += 15;
+        sessionStats.xpGained += 15;
+        sessionStats.correct++;
         feedbackTitle.innerText = "¡Correcto! 🎯";
         feedbackTitle.style.color = "var(--primary)";
         feedbackMsg.innerText = "¡Excelente dominio del croata!";
     } else {
         userStats.lives = Math.max(0, userStats.lives - 1);
+        sessionStats.incorrect++;
         feedbackTitle.innerText = "Incorrecto ❌";
         feedbackTitle.style.color = "var(--danger)";
         feedbackMsg.innerText = `La respuesta correcta es: "${item.spanish}"`;
@@ -402,33 +423,63 @@ function checkAnswer() {
 
 function nextQuizQuestion() {
     feedbackModal.classList.add('hidden');
+
+    if (isSessionFinished) {
+        isSessionFinished = false;
+        nextQuizBtn.innerText = "Siguiente";
+        updateUIHeader();
+        showHomeScreen();
+        return;
+    }
+
     currentIndex++;
 
     if (currentIndex < currentSessionItems.length && userStats.lives > 0) {
         loadQuizQuestion();
     } else {
-        if (userStats.lives > 0) {
-            if (!userStats.completedModules.includes(activeModule.id)) {
-                userStats.completedModules.push(activeModule.id);
-            }
-            alert(`🎉 ¡Nivel superado! Has desbloqueado el siguiente paso en el camino.`);
+        isSessionFinished = true;
+
+        if (sessionStats.isReview) {
+            userStats.xp += 20;
+            sessionStats.xpGained += 20;
         } else {
-            alert("Te has quedado sin vidas. ¡Repasa las tarjetas en modo estudio y vuelve a intentarlo!");
+            if (userStats.lives > 0 && activeModule && activeModule.id !== 'review') {
+                if (!userStats.completedModules.includes(activeModule.id)) {
+                    userStats.completedModules.push(activeModule.id);
+                }
+            }
+        }
+
+        updateInteractionTime();
+
+        const success = userStats.lives > 0;
+        feedbackTitle.innerText = success ? "🎉 ¡Sesión Completada!" : "💔 ¡Te has quedado sin vidas!";
+        feedbackTitle.style.color = success ? "var(--primary)" : "var(--danger)";
+
+        feedbackMsg.innerHTML = `
+            <div style="text-align: left; margin: 15px 0; font-size: 0.95rem; line-height: 1.6;">
+                <p><strong>✅ Aciertos:</strong> ${sessionStats.correct}</p>
+                <p><strong>❌ Errores:</strong> ${sessionStats.incorrect}</p>
+                <p><strong>⭐ XP Ganado:</strong> +${sessionStats.xpGained} XP</p>
+                ${!success ? '<p style="color: var(--danger); margin-top: 10px;">¡Vidas agotadas! Repasa en modo estudio para reintentar.</p>' : ''}
+            </div>
+        `;
+
+        if (!success) {
             userStats.lives = 3;
         }
-        updateUIHeader();
-        showHomeScreen();
+
+        nextQuizBtn.innerText = "Finalizar";
+        feedbackModal.classList.remove('hidden');
     }
 }
 
-// --- REPASO EXPRESS (Sólo lecciones ya aprobadas/completadas) ---
+// --- REPASO EXPRESS ---
 function startReviewSession() {
     reviewBanner.classList.add('hidden');
     
-    // Filtrar estrictamente los módulos que el usuario ya ha completado
     let eligibleModules = courseData.filter(m => userStats.completedModules.includes(m.id));
     
-    // Si por alguna razón no ha completado ninguno aún, usamos por defecto el primer módulo (A1)
     if (eligibleModules.length === 0) {
         eligibleModules = [courseData[0]];
     }
@@ -436,6 +487,11 @@ function startReviewSession() {
     const allItems = eligibleModules.flatMap(m => m.items);
     currentSessionItems = allItems.sort(() => 0.5 - Math.random()).slice(0, 10);
     currentIndex = 0;
+    
+    activeModule = { id: 'review', title: '🔄 Repaso Express' };
+    sessionStats = { correct: 0, incorrect: 0, xpGained: 0, isReview: true };
+    isSessionFinished = false;
+    nextQuizBtn.innerText = "Siguiente";
     
     hideAllScreens();
     quizScreen.classList.remove('hidden');
@@ -462,7 +518,7 @@ function updateInteractionTime() {
     updateUIHeader();
 }
 
-// --- SÍNTESIS DE VOZ NATIVA (Motor de Google Translate) ---
+// --- SÍNTESIS DE VOZ NATIVA ---
 function speakCroatian(text) {
     try {
         window.speechSynthesis?.cancel();
